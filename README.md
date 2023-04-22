@@ -5,7 +5,7 @@ ISTDSA Capstone Project. Real-time e-commerce data analysis with SparkStreaming 
 
 ## Tech Stack
 
-Python, PySpark, Apache Kafka, Apache Nifi, Dataproc, BigQuery, PowerBI
+Python, PySpark, Apache Kafka, Apache Nifi, Dataproc, BigQuery, Looker Studio
 
 ## Author
 
