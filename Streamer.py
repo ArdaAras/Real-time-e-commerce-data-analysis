@@ -1,6 +1,6 @@
 
 
-# pyspark --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.1 --jars=gs://spark-lib/bigquery/spark-bigquery-latest_2.12.jar
+# Deployment options => pyspark --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.1 --jars=gs://spark-lib/bigquery/spark-bigquery-latest_2.12.jar
 
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, TimestampType, FloatType
 from pyspark.sql.functions import col, from_json, to_timestamp
@@ -34,4 +34,4 @@ finalDf = parsed_df.selectExpr("data.InvoiceNo AS InvoiceNo",
 
 
 query = finalDf.writeStream.format("console").start()
-#TODO
+#TODO BigQuery
