@@ -1,9 +1,7 @@
-
-
-# Deployment options => pyspark --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.1 --jars=gs://spark-lib/bigquery/spark-bigquery-latest_2.12.jar
+# Deployment options => pyspark --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.3
 
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, TimestampType, FloatType
-from pyspark.sql.functions import col, from_json, to_timestamp
+from pyspark.sql.functions import col, from_json, to_json, struct
 
 # InvoiceNo,StockCode,Description,Quantity,InvoiceDate,UnitPrice,CustomerID,Country
 baseSchema = StructType([
@@ -17,7 +15,8 @@ baseSchema = StructType([
     StructField("Country", StringType(), nullable=True)
 ])
 
-df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "34.125.248.54:9092") \
+df = spark.readStream.format("kafka") \
+        .option("kafka.bootstrap.servers", "34.125.252.87:9092") \
         .option("subscribe", "RawData") \
         .load()
 
@@ -32,6 +31,15 @@ finalDf = parsed_df.selectExpr("data.InvoiceNo AS InvoiceNo",
                  "data.CustomerID AS CustomerID",
                  "data.Country AS Country")
 
+cleanedFinalDf = finalDf.dropDuplicates().na.drop()
 
-query = finalDf.writeStream.format("console").start()
-#TODO BigQuery
+# Add the 'value' column containing serialized values
+cleanedFinalDf = cleanedFinalDf.withColumn("value", to_json(struct(cleanedFinalDf.columns)))
+
+kafkaDf = cleanedFinalDf.selectExpr("to_json(struct(*)) AS value") \
+    .writeStream \
+    .format("kafka") \
+    .option("kafka.bootstrap.servers", "34.125.252.87:9092") \
+    .option("checkpointLocation", "/home/arda_aras_dev/checkpointdir") \
+    .option("topic", "TransformedData") \
+    .start()
