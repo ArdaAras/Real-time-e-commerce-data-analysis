@@ -15,11 +15,18 @@ baseSchema = StructType([
     StructField("Country", StringType(), nullable=True)
 ])
 
+SUBSCRIBE_TOPIC = "RawData"
+PUBLISH_TOPIC = "TransformedData"
+CHECKPOINT_DIR = "/home/arda_aras_dev/checkpointdir"
+
+# Subscribe to RawData topic
 df = spark.readStream.format("kafka") \
-        .option("kafka.bootstrap.servers", "34.125.252.87:9092") \
-        .option("subscribe", "RawData") \
+        .option("kafka.bootstrap.servers", "34.125.112.207:9092") \
+        .option("failOnDataLoss", False) \
+        .option("subscribe", SUBSCRIBE_TOPIC) \
         .load()
 
+# Convert JSON and apply dataframe schema
 parsed_df = df.selectExpr("CAST(value AS STRING)").select(from_json(col("value"),baseSchema).alias("data"))
 
 finalDf = parsed_df.selectExpr("data.InvoiceNo AS InvoiceNo",
@@ -31,15 +38,17 @@ finalDf = parsed_df.selectExpr("data.InvoiceNo AS InvoiceNo",
                  "data.CustomerID AS CustomerID",
                  "data.Country AS Country")
 
+# Remove duplicates and NaN values
 cleanedFinalDf = finalDf.dropDuplicates().na.drop()
 
 # Add the 'value' column containing serialized values
-cleanedFinalDf = cleanedFinalDf.withColumn("value", to_json(struct(cleanedFinalDf.columns)))
+cleanedFinalDf = finalDf.withColumn("value", to_json(struct(finalDf.columns)))
 
 kafkaDf = cleanedFinalDf.selectExpr("to_json(struct(*)) AS value") \
     .writeStream \
     .format("kafka") \
-    .option("kafka.bootstrap.servers", "34.125.252.87:9092") \
-    .option("checkpointLocation", "/home/arda_aras_dev/checkpointdir") \
-    .option("topic", "TransformedData") \
+    .option("kafka.bootstrap.servers", "34.125.112.207:9092") \
+    .option("checkpointLocation", CHECKPOINT_DIR) \
+    .option("failOnDataLoss", False) \
+    .option("topic", PUBLISH_TOPIC) \
     .start()
