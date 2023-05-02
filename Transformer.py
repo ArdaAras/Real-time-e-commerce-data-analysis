@@ -17,7 +17,8 @@ baseSchema = StructType([
 
 SUBSCRIBE_TOPIC = "RawData"
 PUBLISH_TOPIC = "TransformedData"
-CHECKPOINT_DIR = "/home/arda_aras_dev/checkpointdir"
+CHECKPOINT_DIR = "/home/arda_aras_dev/checkpointdir2"
+CONSUMER_GROUP_ID = "Transformers"
 
 # Subscribe to RawData topic
 df = spark.readStream.format("kafka") \
@@ -41,14 +42,12 @@ finalDf = parsed_df.selectExpr("data.InvoiceNo AS InvoiceNo",
 # Remove duplicates and NaN values
 cleanedFinalDf = finalDf.dropDuplicates().na.drop()
 
-# Add the 'value' column containing serialized values
-cleanedFinalDf = finalDf.withColumn("value", to_json(struct(finalDf.columns)))
-
 kafkaDf = cleanedFinalDf.selectExpr("to_json(struct(*)) AS value") \
     .writeStream \
     .format("kafka") \
     .option("kafka.bootstrap.servers", "34.125.112.207:9092") \
     .option("checkpointLocation", CHECKPOINT_DIR) \
     .option("failOnDataLoss", False) \
+    .option("kafka.group.id", CONSUMER_GROUP_ID) \
     .option("topic", PUBLISH_TOPIC) \
     .start()
