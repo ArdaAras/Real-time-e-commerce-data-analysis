@@ -19,7 +19,6 @@ KAFKA_PARAMS = "34.125.166.117:9092"
 SUBSCRIBE_TOPIC = "RawData"
 PUBLISH_TOPIC = "TransformedData"
 CHECKPOINT_DIR = "/home/arda_aras_dev/checkpointdir2"
-CONSUMER_GROUP_ID = "Transformers"
 
 # Subscribe to RawData topic
 df = spark.readStream.format("kafka") \
