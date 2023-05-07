@@ -8,7 +8,7 @@ header = 'InvoiceNo,StockCode,Description,Quantity,InvoiceDate,UnitPrice,Custome
 filenamebase = 'DataFiles/DataFile'
 fileNumber = 1
 
-lineCountForEachFile = 10000
+lineCountForEachFile = 5000
 
 # Generate files
 # Start with DataFile1 and create a new file with incremented suffix number for each 10K records
